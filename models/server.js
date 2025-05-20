@@ -52,23 +52,28 @@ app.post('/api/login', async (req, res) => {
 });
 
 
-// (c) GET data (filtered by gym)
+// GET /api/data?gym=<gymKey>
 app.get('/api/data', async (req, res) => {
   const { gym } = req.query;
   if (!gym) {
     return res.status(400).send({ error: 'gym query parameter required.' });
   }
 
-  // Only fetch points for that gym
+  // Only fetch points tagged with that gym
   const points = await DataPoint.find({ gym })
     .sort({ timestamp: 1 })
     .limit(96)
     .lean();
 
-  // Strip off fractional seconds
+  // Strip fractional seconds, explicitly include gym
   const cleaned = points.map(p => ({
-    ...p,
-    timestamp: p.timestamp.toISOString().replace(/\.\d+Z$/, 'Z')
+    _id:       p._id,
+    gym:       p.gym,
+    count:     p.count,
+    timestamp: p.timestamp
+      .toISOString()
+      .replace(/\.\d+Z$/, 'Z'),
+    __v:       p.__v
   }));
 
   res.json(cleaned);
