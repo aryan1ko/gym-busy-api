@@ -1,9 +1,10 @@
+// models/DataPoint.js
 const mongoose = require('mongoose');
 
 const dataPointSchema = new mongoose.Schema({
   gym: {
     type: String,
-    required: true   // we now require the gym identifier
+    required: true                    // every point must have a gym
   },
   timestamp: {
     type: Date,
@@ -16,4 +17,3 @@ const dataPointSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('DataPoint', dataPointSchema);
-
