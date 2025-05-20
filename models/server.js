@@ -51,19 +51,40 @@ app.post('/api/login', async (req, res) => {
   res.send({ token });
 });
 
-// (c) GET data
+
+// (c) GET data (filtered by gym)
 app.get('/api/data', async (req, res) => {
-  const points = await DataPoint.find().sort({ timestamp: 1 }).limit(96);
-  res.send(points);
+  const { gym } = req.query;
+  if (!gym) {
+    return res.status(400).send({ error: 'gym query parameter required.' });
+  }
+
+  // Only fetch points for that gym
+  const points = await DataPoint.find({ gym })
+    .sort({ timestamp: 1 })
+    .limit(96)
+    .lean();
+
+  // Strip off fractional seconds
+  const cleaned = points.map(p => ({
+    ...p,
+    timestamp: p.timestamp.toISOString().replace(/\.\d+Z$/, 'Z')
+  }));
+
+  res.json(cleaned);
 });
 
 // (d) POST data (auth required)
 app.post('/api/data', auth, async (req, res) => {
-  const { count } = req.body;
-  const p = new DataPoint({ count });
+  const { count, gym } = req.body;
+  if (!gym) {
+    return res.status(400).send({ error: 'Must include gym field.' });
+  }
+  const p = new DataPoint({ gym, count });
   await p.save();
   res.send({ success: true, point: p });
 });
+
 
 // 4) Start server
 const PORT = process.env.PORT || 4000;
