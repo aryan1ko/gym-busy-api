@@ -1,10 +1,10 @@
 require('dotenv').config();
-const express = require('express');
+const express  = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
-const jwt = require('jsonwebtoken');
+const cors     = require('cors');
+const jwt      = require('jsonwebtoken');
 
-const User = require('./models/User');
+const User      = require('./models/User');
 const DataPoint = require('./models/DataPoint');
 
 const app = express();
@@ -12,7 +12,8 @@ app.use(cors());
 app.use(express.json());
 
 // 1) Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error(err));
 
@@ -29,9 +30,7 @@ const auth = (req, res, next) => {
   }
 };
 
-// 3) Routes
-
-// (a) Register — only run once to create your master account
+// 3a) Register — run once to create your master account
 app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
   const user = new User({ username });
@@ -40,32 +39,37 @@ app.post('/api/register', async (req, res) => {
   res.send({ success: true });
 });
 
-// (b) Login
+// 3b) Login
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   const user = await User.findOne({ username });
   if (!user || !(await user.validatePassword(password))) {
     return res.status(401).send({ error: 'Invalid credentials' });
   }
-  const token = jwt.sign({ id: user._id, username }, process.env.JWT_SECRET, { expiresIn: '12h' });
+  const token = jwt.sign(
+    { id: user._id, username },
+    process.env.JWT_SECRET,
+    { expiresIn: '12h' }
+  );
   res.send({ token });
 });
 
-
-// GET /api/data?gym=<gymKey>
+// 3c) GET /api/data?gym=<gymKey> + 1-minute synthetic fallback
 app.get('/api/data', async (req, res) => {
   const { gym } = req.query;
   if (!gym) {
-    return res.status(400).send({ error: 'gym query parameter required.' });
+    return res
+      .status(400)
+      .send({ error: 'gym query parameter required.' });
   }
 
-  // Only fetch points tagged with that gym
+  // Fetch the last 96 real points
   const points = await DataPoint.find({ gym })
     .sort({ timestamp: 1 })
     .limit(96)
     .lean();
 
-  // Strip fractional seconds, explicitly include gym
+  // Clean timestamps, include gym/count
   const cleaned = points.map(p => ({
     _id:       p._id,
     gym:       p.gym,
@@ -76,10 +80,35 @@ app.get('/api/data', async (req, res) => {
     __v:       p.__v
   }));
 
+  // If the last real point is more than 1 minute ago, append a synthetic point
+  if (cleaned.length) {
+    const last     = cleaned[cleaned.length - 1];
+    const lastDate = new Date(last.timestamp);
+    const now      = new Date();
+    const ONE_MIN  =  1 * 60 * 1000;
+
+    if (now - lastDate > ONE_MIN) {
+      const fallbackDate  = new Date(lastDate.getTime() + ONE_MIN);
+      const fallbackCount = Math.max(0, last.count - 10);
+
+      cleaned.push({
+        _id:       mongoose.Types.ObjectId(),      // new ID
+        gym:       last.gym,
+        count:     fallbackCount,
+        timestamp: fallbackDate
+          .toISOString()
+          .replace(/\.\d+Z$/, 'Z'),
+        __v:       0,
+        synthetic: true                           // flag if you want
+      });
+    }
+  }
+
+  // Return both real + synthetic
   res.json(cleaned);
 });
 
-// (d) POST data (auth required)
+// 3d) POST /api/data (auth required)
 app.post('/api/data', auth, async (req, res) => {
   const { count, gym } = req.body;
   if (!gym) {
@@ -89,7 +118,6 @@ app.post('/api/data', auth, async (req, res) => {
   await p.save();
   res.send({ success: true, point: p });
 });
-
 
 // 4) Start server
 const PORT = process.env.PORT || 4000;
