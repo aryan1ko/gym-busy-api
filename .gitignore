@@ -1,0 +1,19 @@
+# → Xcode build folders
+build/
+DerivedData/
+
+# → Xcode user data
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# → Cocoapods (if you use it)
+Pods/
+
+# → Swift Package Manager
+.build/
+
+# → macOS
+.DS_Store
+
+# → environment files
+.env
