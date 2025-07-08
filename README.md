@@ -106,3 +106,7 @@ Use the Profile tab to log in as your admin, set the current count, and then swi
  8. Optimize network caching / offline mode
 
  ---
+<img width="291" alt="Screenshot 2025-07-07 at 10 45 55 PM" src="https://github.com/user-attachments/assets/6892ca4c-ec44-4432-93c1-425964775a22" />
+<img width="284" alt="Screenshot 2025-07-07 at 10 47 07 PM" src="https://github.com/user-attachments/assets/ef26e383-33d0-4fce-91c2-62a9ed7f53eb" />
+
+ 
