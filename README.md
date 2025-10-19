@@ -3,7 +3,7 @@
 > 🚧 _Work in Progress_ 🚧  
 > This project is an iOS + Node.js/MongoDB app to display live graphs for how busy the two main university gyms are at The University of Texas at Austin (Gregory Gym & Recreational Center); It can be reused for other facilities or for other campuses as well. The admin staff can update the current head-count, and the mobile client will plot it in real time (with a fallback synthetic point if no update arrives after a set interval). A model is currently being developed to optimize this fallback and offer predictions on "business" which will be incorporated into the app in the near future.
 
-**HornsTraffic** is an independent, student-led project. It is not sponsored, endorsed, or officially associated with The University of Texas at Austin
+<!-- **HornsTraffic** is an independent, student-led project. It is not sponsored, endorsed, or officially associated with The University of Texas at Austin -->
 ---
 ```bash
 ## 📂 Repository Structure
